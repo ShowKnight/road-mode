@@ -106,6 +106,10 @@ sudo rm -f /etc/sudoers.d/roadmode
 - 编译依赖：Xcode Command Line Tools（`swiftc`）
 - 需要你本人能在终端执行 sudo（用于一次性安装白名单）
 
+## 更新记录
+
+形态被否决过四轮、修过一批真 bug，完整过程见 [CHANGELOG.md](CHANGELOG.md)——包括为什么 `caffeinate` 挡不住合盖、菜单栏 400pt 溢出缺口怎么量出来的。
+
 ## 许可
 
 MIT，见 [LICENSE](LICENSE)。
