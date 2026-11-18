@@ -5,6 +5,15 @@
 
 ![合盖不休眠倒计时](assets/screenshots/countdown.png)
 
+**RoadMode** is a tiny macOS menu bar utility: click once and your MacBook **stays awake with the lid closed for 60 minutes**, then restores itself automatically. Useful when an AI task, SSH session or download must survive a closed lid on the go.
+
+- Uses the only switch that actually works for clamshell sleep: `SleepDisabled` (via `pmset -a disablesleep`)
+- Password-free after a one-time `sudoers` allow-list (exactly two whitelisted arguments, nothing more)
+- Live countdown in the menu bar, heart-beating `caffeinate`, no Dock icon, no hotkey
+- macOS 13+, tested on macOS 26.4.1 / Apple Silicon; MIT licensed — PRs welcome
+
+---
+
 ---
 
 ## 为什么做这个
