@@ -1,6 +1,6 @@
 import Cocoa
 
-// 路上模式 v2.0  —  真正的菜单栏状态项（可被 Thaw / Ice 收纳管理）
+// 路上模式 v2.3  —  真正的菜单栏状态项（可被 Thaw / Ice 收纳管理）
 // 点一下 = 60 分钟「合盖不睡 + 不休眠」倒计时；再点 = 取消；到期自动还原
 // 心跳守护：caffeinate 被杀自动重生；状态只由倒计时决定
 // 无 Dock、无快捷键、无菜单；开机自启；纯图标无文字
@@ -12,6 +12,8 @@ final class Controller: NSObject, NSApplicationDelegate {
     var active = false
     var endDate: Date?
     var lastClick: Date = .distantPast
+    var lastLidCheck: Date = .distantPast
+    var reassertCount = 0
 
     let agentLabel = "com.lonqi.roadmode"
     let pmsetPath = "/usr/bin/pmset"
@@ -32,7 +34,7 @@ final class Controller: NSObject, NSApplicationDelegate {
         buildStatusItem()
         installLoginItem()
         startHeartbeat()
-        log("launch v2.1 statusItem+countdown")
+        log("launch v2.3 statusItem+countdown+selfheal")
     }
 
     func buildStatusItem() {
@@ -103,6 +105,16 @@ final class Controller: NSObject, NSApplicationDelegate {
             let remain = endDate.map { Int($0.timeIntervalSinceNow) } ?? Int(windowSeconds)
             spawnCaff(seconds: remain)
             log("caff respawn remaining=\(remain)s")
+        }
+        // 自愈：系统侧可能把 SleepDisabled 悄悄清回 0（换电源、powerd 重载配置等），
+        // 每 5 秒核对一次，掉线就立刻补回去 —— 否则后半段合盖又会被睡
+        if Date().timeIntervalSince(lastLidCheck) >= 5 {
+            lastLidCheck = Date()
+            if !sleepDisabled() {
+                setLid(on: true)
+                reassertCount += 1
+                log("lid drifted to 0 -> reasserted (#\(reassertCount))")
+            }
         }
         refresh()
     }

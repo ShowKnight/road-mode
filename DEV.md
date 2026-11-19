@@ -23,7 +23,7 @@ cd ~/Documents/AgenticEngineer/road-mode
 | `buildStatusItem()` | 建菜单栏图标，绑定点击 |
 | `handleClick()` | 2.5 秒防抖，然后开 / 关 |
 | `activate()` / `deactivate()` | 置 `SleepDisabled`、拉起 / 杀掉 `caffeinate`、刷新界面 |
-| `tick()`（每秒心跳） | 到期判定、倒计时刷新、`caffeinate` 掉了就重生 |
+| `tick()`（每秒心跳） | 到期判定、倒计时刷新、`caffeinate` 掉了就重生、每 5 秒核对 `SleepDisabled` 是否被系统清掉（自愈） |
 
 改界面只动 `refresh()`；改时长只动 `windowSeconds`；改免密范围只动 `scripts/install-sudoers.sh`。
 
@@ -56,7 +56,8 @@ osascript -e 'tell application "System Events" to tell process "RoadMode" to get
 
 1. **别用 `caffeinate` 去做"合盖不睡"。** `-i` / `-u` 挡不住合盖，唯一有效的是 `SleepDisabled`。`caffeinate` 在这里只是顺带压住空闲休眠，别指望它挡合盖。
 2. **别相信 `caffeinate` 一直活着。** 它会被各种清理脚本 SIGTERM 掉，所以才有每秒心跳重生逻辑。删掉心跳，功能就会时好时坏。
-3. **带刘海机型菜单栏会吞图标。** 状态项从右往左排，溢出部分落在刘海左侧且不再绘制（本机实测缺口约 400pt）。新加的图标如果看不见，不是代码坏了，是排不进去。对策：图标做窄（34pt 级）、或折叠掉不常用的图标。
+3. **`SleepDisabled` 会被系统悄悄清回 0。** 插拔电源、`powerd` 重载配置时会重置这个运行时开关，表现为"App 还在倒计时但开关已经掉了"。所以 `tick()` 里必须每 5 秒核对一次并补回，删掉这段自愈，功能就会在关键时刻失效（v2.3 修的就是这个）。
+4. **带刘海机型菜单栏会吞图标。** 状态项从右往左排，溢出部分落在刘海左侧且不再绘制（本机实测缺口约 400pt）。新加的图标如果看不见，不是代码坏了，是排不进去。对策：图标做窄（34pt 级）、或折叠掉不常用的图标。
 
 ## 版本号与文档
 

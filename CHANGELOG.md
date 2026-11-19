@@ -26,6 +26,29 @@
 
 ---
 
+## v2.3 · 2026-11-19（当前发布版）
+
+**修掉一个真问题：系统会把 `SleepDisabled` 悄悄清回 0，而 App 还以为自己在计时。**
+
+现象（11-19 早上实测）：08:32 点开启、合盖出门，机器确实一秒没睡（`pmset -g log` 当日 `Entering Sleep`=0、`Wake from`=0）；但 09:26 查 `pmset -g` 时 `SleepDisabled` 已经是 0，而 60 分钟窗口要到 09:32 才到期，日志里也没有任何 `deactivate`。也就是说，倒计时还剩几分钟时，"开关"其实已经掉了——如果不是那一小时里恰好还有别的断言压着，合盖就该睡了。
+
+推断原因：插拔电源、`powerd` 重新加载电源配置时，会把 `disablesleep` 这类运行时开关重置回默认值。手动点开/点关都不会触发，所以平时很难复现。
+
+修法：`tick()` 里每 5 秒核对一次 `SleepDisabled`，只要还在计时却被清成 0，立刻补回 1 并记日志 `lid drifted to 0 -> reasserted (#n)`。频率选 5 秒是为了不每秒 fork 一个 `pmset` 进程。
+
+真机验证（故意把开关踩掉）：
+
+```
+01:29:47 activate 60m              → SleepDisabled=1
+（手动 sudo pmset -a disablesleep 0）→ SleepDisabled=0
+01:29:52 lid drifted to 0 -> reasserted (#2)  → SleepDisabled=1
+01:30:06 deactivate (user)         → SleepDisabled=0
+```
+
+顺带：版本号 1.1 → 2.3，日志行改为 `launch v2.3 statusItem+countdown+selfheal`。
+
+---
+
 ## v2.2 · 2026-11-18（被否决，仅留档）
 
 在 v2.1 上加了「状态项被隐藏时自动弹一个右上角悬浮图标兜底」。
